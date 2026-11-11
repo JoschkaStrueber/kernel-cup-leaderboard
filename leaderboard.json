@@ -1,10 +1,30 @@
 {
- "updated_at": "2026-11-11T12:58:19Z",
+ "updated_at": "2026-11-11T14:15:14Z",
  "phase": "open",
  "reference": {
   "starter": null,
   "quack": null
  },
+ "baselines": [
+  {
+   "name": "Starter (staff run)",
+   "language": "CuTe DSL",
+   "link": "https://github.com/LLM-Engineering-26-27/kernel-cup/blob/main/submission/kernel.py",
+   "score": 2.5430884491295918,
+   "sol_percent": 14.01934822243704,
+   "last_measured": "2026-11-11T14:12:24Z",
+   "job": "8539399"
+  },
+  {
+   "name": "PyTorch bf16 F.cross_entropy (staff run)",
+   "language": "PyTorch",
+   "link": null,
+   "score": 3.7288992576405833,
+   "sol_percent": 20.556397555556014,
+   "last_measured": "2026-11-11T14:12:24Z",
+   "job": "8539399"
+  }
+ ],
  "without_name": {
   "no_nickname": 0,
   "unreadable": 0
