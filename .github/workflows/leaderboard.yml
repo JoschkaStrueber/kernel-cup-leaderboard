@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["config*.toml", "final/**"]
+    paths: ["config*.toml", "final/**", "baselines/**"]
 permissions:
   contents: write
 concurrency:

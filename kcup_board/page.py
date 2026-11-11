@@ -1,7 +1,8 @@
 """The public leaderboard: leaderboard.json and one static page (design §9.5, §9.6).
 
 board() is the only door to the public: it copies an allow-list of fields out of the collected
-entries, so nothing else in a results JSON (node, host, SLURM job, file paths) gets out. render()
+entries, so nothing else in a results JSON (node, host, an entry's SLURM job, file paths) gets out.
+The reference rows (baseline()) do show the staff run's SLURM job ID, and nothing else of its environment. render()
 reads board()'s output only and escapes every name. The page is HTML with inline CSS and SVG,
 no scripts."""
 
@@ -47,6 +48,17 @@ def _comparator_score(results: dict, name: str) -> float | None:
                      for shape in results["shapes"] if "median_s" in shape["impls"].get(name, {})])
 
 
+def baseline(name: str, impl: str, language: str, link: str | None, run: dict) -> dict:
+    """A reference row (design §9.5): impl in the staff run of the starter, scored like an entry. Within a
+    shape, % of speed of light is the ideal bytes over the time (the kit's score.sol_percent), so impl's is
+    the submission's times t_submission / t_impl. Raises ValueError when one rounds to 0."""
+    sols = [shape["sol_percent"] * shape["impls"]["submission"]["median_s"] / shape["impls"][impl]["median_s"]
+            for shape in run["shapes"]]
+    return {"name": name, "language": language, "link": link, "score": _comparator_score(run, impl),
+            "sol_percent": _geomean(sols), "last_measured": run["finished_at"],
+            "job": run["environment"]["slurm_job_id"]}
+
+
 def _public(entry: dict) -> dict:
     results = entry["results"]
     row = {field: entry.get(field) for field in ("name", "division", "language", "status", "frozen")}
@@ -80,9 +92,10 @@ def _order(row: dict) -> tuple:
     return list(DIVISIONS).index(row["division"]), row["rank"] is None, row["rank"] or 0, row["name"].lower()
 
 
-def board(entries: list[dict], *, now: str, final: dict | None, phase: str) -> dict:
+def board(entries: list[dict], *, now: str, final: dict | None, phase: str, baselines: list[dict] = ()) -> dict:
     """The allow-listed leaderboard.json, keyed by the shown name. Provisional ranks go by score within
-    each division (identical scores tie, as in ranking.py). Final ranks come from final.json."""
+    each division (identical scores tie, as in ranking.py). Final ranks come from final.json. The
+    reference rows (collect.baselines()) are kept apart from the entries: never ranked, tied or counted."""
     named = [entry for entry in entries if entry["name"] is not None]
     nameless = [entry for entry in entries if entry["name"] is None]
     rows = {entry["name"]: _public(entry) for entry in named}
@@ -100,6 +113,7 @@ def board(entries: list[dict], *, now: str, final: dict | None, phase: str) -> d
         reference[name] = statistics.median(scores) if scores else None
     unreadable = sum("collector-error" in entry["reasons"] for entry in nameless)
     return {"updated_at": now, "phase": phase, "reference": reference,
+            "baselines": [dict(row) for row in baselines],
             "without_name": {"no_nickname": len(nameless) - unreadable, "unreadable": unreadable},
             "entries": {row["name"]: row for row in sorted(rows.values(), key=_order)}}
 
@@ -267,12 +281,25 @@ def _heatmap(name: str, heatmap: dict | None) -> str:
 # -- the page -----------------------------------------------------------------------------------
 
 
-def _table(rows: list[dict]) -> str:
-    if not rows:
-        return '<p class="note">No entries yet.</p>'
+def _baseline_row(row: dict) -> str:
+    name = html.escape(row["name"])
+    cells = ("–", f'<a href="{html.escape(row["link"])}">{name}</a>' if row["link"] else name,
+             _score(row["score"]), _percent(row["sol_percent"]), "–", html.escape(row["language"]), "–",
+             _when(row["last_measured"]),
+             html.escape(f"Reference: measured by staff on {row['last_measured'][:10]}, job {row['job']}"))
+    return '<tr class="baseline">' + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>"
+
+
+def _table(rows: list[dict], baselines: list[dict]) -> str:
+    none = '<p class="note">No entries yet.</p>'
+    if not rows and not baselines:
+        return none
     head = ("Rank", "Team", "Score", "% of speed of light", "Kernels per call", "Language", "Submissions",
             "Last measured", "Status")
-    out = ['<div class="scroll"><table><thead><tr>', *(f"<th>{h}</th>" for h in head), "</tr></thead><tbody>"]
+    out = ['<div class="scroll"><table><thead><tr>', *(f"<th>{h}</th>" for h in head), "</tr></thead>"]
+    if baselines:
+        out.append('<tbody class="baselines">' + "".join(_baseline_row(row) for row in baselines) + "</tbody>")
+    out.append("<tbody>")
     for row in rows:
         muted = ' class="unranked"' if row["rank"] is None else ""
         name = html.escape(row["name"])
@@ -284,7 +311,7 @@ def _table(rows: list[dict]) -> str:
                  str(row["submissions"]), _when(row["last_measured"]), _status(row))
         out.append(f"<tr{muted}>" + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>")
     out.append("</tbody></table></div>")
-    return "".join(out)
+    return "".join(out) + ("" if rows else none)
 
 
 def _race(board: dict, by_division: dict[str, list[dict]]) -> str:
@@ -354,7 +381,7 @@ def render(board: dict) -> str:
             f'<p class="updated">Last update: {_when(board["updated_at"])}. Select a team for its heatmap '
             "and score history.</p></header>"]
     for division, rows in by_division.items():
-        body.append(f"<section><h2>{DIVISIONS[division]}</h2>{_table(rows)}</section>")
+        body.append(f"<section><h2>{DIVISIONS[division]}</h2>{_table(rows, board['baselines'])}</section>")
     if lines:
         body.append(f'<p class="note">{" ".join(lines)}</p>')
     title = "Self-measured scores over time" if phase == "final" else "Score over time"
@@ -365,7 +392,9 @@ def render(board: dict) -> str:
                 "PyTorch reference, both timed in the same job. % of speed of light: the share of the copy "
                 "bandwidth measured in that job. Kernels per call: the most kernels one call launches on any "
                 "shape. A stale entry changed its kernel after its newest eligible measurement, so the page "
-                "shows the older score.</p></footer>")
+                "shows the older score. The reference rows at the top of each table come from one staff run of "
+                "the unchanged starter, which also timed PyTorch's bf16 F.cross_entropy. They are never "
+                "ranked.</p></footer>")
     return ("<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">"
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
             f"<title>Kernel Cup leaderboard</title><style>{CSS}</style></head>"
@@ -416,7 +445,8 @@ CSS = (
     "{text-align:right}"
     "td:last-child{white-space:normal;min-width:120px}"
     "tbody tr:last-child td{border-bottom:0}"
-    "tr.unranked td{color:var(--ink-2)}"
+    "tr.unranked td,tr.baseline td{color:var(--ink-2)}"
+    "tbody.baselines tr:last-child td{border-bottom:2px solid var(--axis)}"
     ".panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}"
     ".panel,.team{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px}"
     "figure{margin:0}svg{display:block;width:100%;height:auto;max-width:480px}"

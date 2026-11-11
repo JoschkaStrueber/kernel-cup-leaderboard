@@ -47,6 +47,12 @@ HARNESS_PREFIX = "kcup_harness/"
 HARNESS_EXTRA = ("job.sh", "pytest.ini")
 RESULTS = re.compile(r"^results/[^/]+\.json$")
 PLACEHOLDER = "> Replace this"
+BASELINE = "baselines/starter.json"  # next to config.toml: the staff run of the unchanged starter
+# The pinned reference rows (design §9.5): the label, the implementation in the staff run whose timings make
+# the row, the language as the page shows it, and a link.
+BASELINES = (("Starter (staff run)", "submission", "CuTe DSL",
+              "https://github.com/LLM-Engineering-26-27/kernel-cup/blob/main/submission/kernel.py"),
+             ("PyTorch bf16 F.cross_entropy (staff run)", "torch_bf16", "PyTorch", None))
 CONFIG_KEYS = {"owner": str, "pattern": str, "freeze_at": str, "output_prefix": str, "accepted_kit_versions": list}
 
 
@@ -253,6 +259,37 @@ def _read_entry(client, owner: str, repo: str, kit_versions: dict, schema: dict,
     return history, {"division": team.division, "language": team.language, **row}, unreadable
 
 
+def baselines(path: Path, config: dict, kit_versions: dict, schema: dict, now: datetime) -> list[dict]:
+    """The reference rows (page.baseline()) from the staff run at path. The run passes what a ranked entry
+    passes (eligible, a harness that config accepts, the census and the plausibility check) and names its
+    SLURM job. A row needs its implementation timed on every shape and a % of speed of light the page can
+    draw. Whatever fails is left out with a log line, so the board is still written (§9.4)."""
+    accepted = {version: kit_versions[version] for version in config["accepted_kit_versions"]}
+    try:
+        run = json.loads(path.read_text(), parse_constant=_no_constant)
+        ok = (eligible(run, schema, now) and harness_version(_blobs(run["harness"]["files"]), accepted) is not None
+              and run["census"]["passed"] and plausible(run["summary"]) and run["environment"]["slurm_job_id"])
+    except (OSError, ValueError, OverflowError) as error:
+        print(f"baseline not shown: {type(error).__name__}", file=sys.stderr)
+        return []
+    if not ok:
+        print("baseline not shown: the staff run fails a ranked entry's checks or has no job id", file=sys.stderr)
+        return []
+    rows = []
+    for name, impl, language, link in BASELINES:
+        row = None
+        if all("median_s" in shape["impls"].get(impl, {}) for shape in run["shapes"]):
+            try:
+                row = page.baseline(name, impl, language, link, run)
+            except ValueError:  # a % of speed of light that rounds to 0 has no logarithm
+                pass
+        if row is not None and 0 < row["sol_percent"] < MAX_PERCENT:
+            rows.append(row)
+        else:
+            print(f"baseline not shown: {impl} is not timed on every shape or out of range", file=sys.stderr)
+    return rows
+
+
 def collect(client, config: dict, kit_versions: dict, schema: dict, now: datetime) -> list[dict]:
     """One entry per pair repository with a kcup branch: its shown name, division, language and status()."""
     owner = config["owner"]
@@ -310,7 +347,8 @@ def main(argv: list[str] | None = None) -> int:
             failed += 1
             continue
         board = page.board(entries, now=now.strftime("%Y-%m-%dT%H:%M:%SZ"), final=final,
-                           phase=phase(config, now, final=final is not None))
+                           phase=phase(config, now, final=final is not None),
+                           baselines=baselines(path.parent / BASELINE, config, kit_versions, schema, now))
         page.write_site(args.site, board, prefix)
         if "cname" in config:  # GitHub Pages keeps a custom domain only while the root has this file
             (args.site / "CNAME").write_text(config["cname"] + "\n")
