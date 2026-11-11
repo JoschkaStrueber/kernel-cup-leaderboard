@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-11T14:15:14Z",
+ "updated_at": "2026-11-11T14:45:35Z",
  "phase": "open",
  "reference": {
   "starter": null,
@@ -12,6 +12,7 @@
    "link": "https://github.com/LLM-Engineering-26-27/kernel-cup/blob/main/submission/kernel.py",
    "score": 2.5430884491295918,
    "sol_percent": 14.01934822243704,
+   "kernels_per_call": 16,
    "last_measured": "2026-11-11T14:12:24Z",
    "job": "8539399"
   },
@@ -21,6 +22,7 @@
    "link": null,
    "score": 3.7288992576405833,
    "sol_percent": 20.556397555556014,
+   "kernels_per_call": null,
    "last_measured": "2026-11-11T14:12:24Z",
    "job": "8539399"
   }
