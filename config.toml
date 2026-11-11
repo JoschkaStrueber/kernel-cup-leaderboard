@@ -1,0 +1,8 @@
+# The Kernel Cup collector. Edited only in the course repository and published by
+# scripts/staff/kcup/publish.py (design §9.3).
+owner = "LLM-Engineering-26-27"
+pattern = "^pair-g[0-9]{2}$"
+freeze_at = "2026-12-15T22:59:59Z"     # the late path (§3.1): "2027-01-05T22:59:59Z"
+output_prefix = ""
+accepted_kit_versions = ["v1"]         # kit tags whose harness counts (design §9.3)
+cname = "kernelcup.strueber.dev"       # the page's custom domain, written to the site root as CNAME

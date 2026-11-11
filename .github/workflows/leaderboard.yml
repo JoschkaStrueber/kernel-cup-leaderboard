@@ -1,0 +1,42 @@
+# Collects every pair's self-measured Kernel Cup results and publishes the page (design §9.3).
+# No pull-request triggers: repository secrets must never reach code from a fork.
+name: leaderboard
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["config*.toml", "final/**"]
+permissions:
+  contents: write
+concurrency:
+  group: leaderboard
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {ref: gh-pages, path: site}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with: {python-version: "3.12"}
+      - run: python -m pip install --require-hashes -r requirements.txt
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.KCUP_APP_ID }}
+          private-key: ${{ secrets.KCUP_APP_PRIVATE_KEY }}
+          owner: LLM-Engineering-26-27 # config.toml's owner: this repository may live outside the org
+      - env:
+          KCUP_TOKEN: ${{ steps.app.outputs.token }}
+        run: |
+          args=(); for c in config*.toml; do args+=(--config "$c"); done
+          python -m kcup_board.collect "${args[@]}" --site site --kit-versions kit_versions.json --schema schema.json
+      - working-directory: site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || { git commit -qm "leaderboard $(date -u +%FT%TZ)"; git push; }

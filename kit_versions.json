@@ -1,0 +1,34 @@
+{
+  "v1": {
+    "harness": {
+      "job.sh": "ed50b63dea9087200a068694ef289ed3ed81fe2d",
+      "kcup_harness/__init__.py": "d5af7ab52b1a90408e7ee8338f366adb591dec82",
+      "kcup_harness/bench.py": "95c05c6376b3dd2b6091e13cc17dfcdbb6bee042",
+      "kcup_harness/cases.py": "ff19a1bd4ae6cf8e6b439f8c212725325f9b8601",
+      "kcup_harness/census.py": "8f9deb48b4bc108f8974a90993c1e2eccd6932fc",
+      "kcup_harness/checks.py": "e912254de37468a81e38f5bcfddecfed449e207d",
+      "kcup_harness/comparators.py": "5e0ac5e9cd8943bacd16169098075d697f320e80",
+      "kcup_harness/conftest.py": "966bb19d2641494cdfb8e2ab863912d625cb5b5f",
+      "kcup_harness/loading.py": "8d5aa6f5d7cb12d785353603b614535430c267f1",
+      "kcup_harness/manifest.py": "cfd2fd0d53eda97127485979965bd542833e61b1",
+      "kcup_harness/plot.py": "977aee854b4788d6cde651e513d685393e2b7877",
+      "kcup_harness/reference.py": "27e3e816ec495048da30feb02bc876c49406678d",
+      "kcup_harness/schema.json": "a30bef0ff6d321b038a86f899264159562851de3",
+      "kcup_harness/score.py": "facbb3d561e3d7d6af123b7536a249ed3bdab752",
+      "kcup_harness/starter_kernel.py": "7cb5f003bf3b1a031a81a4c0196b0bd345ceff8c",
+      "kcup_harness/test_kernel.py": "93ea948fdd22ea1ce0b308a1f5a9958756d68074",
+      "pytest.ini": "2f10c9536a54187c14deb1568a0f79d4bb5038e9"
+    },
+    "writeup": {
+      "blob": "d8fb0d77d571100b4d2fdc1a741a6a248f0217f2",
+      "placeholders": [
+        "> Replace this with your kernel's main idea in two or three sentences.",
+        "> Replace this with what a profile told you, and how it changed your kernel.",
+        "> Replace this with one or two things you tried that failed, and why.",
+        "> Replace this with your timings, and what you think limits the kernel now.",
+        "> Replace this with the papers, posts and code you read, and the code you reused.",
+        "> Replace this with which AI assistants (chat models, coding agents) you used and for what."
+      ]
+    }
+  }
+}
