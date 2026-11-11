@@ -48,7 +48,7 @@ HARNESS_EXTRA = ("job.sh", "pytest.ini")
 RESULTS = re.compile(r"^results/[^/]+\.json$")
 PLACEHOLDER = "> Replace this"
 BASELINE = "baselines/starter.json"  # next to config.toml: the staff run of the unchanged starter
-# The pinned reference rows (design §9.5): the label, the implementation in the staff run whose timings make
+# The reference rows (design §9.5): the label, the implementation in the staff run whose timings make
 # the row, the language as the page shows it, and a link.
 BASELINES = (("Starter (staff run)", "submission", "CuTe DSL",
               "https://github.com/LLM-Engineering-26-27/kernel-cup/blob/main/submission/kernel.py"),

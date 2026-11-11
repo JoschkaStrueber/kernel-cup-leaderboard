@@ -51,11 +51,13 @@ def _comparator_score(results: dict, name: str) -> float | None:
 def baseline(name: str, impl: str, language: str, link: str | None, run: dict) -> dict:
     """A reference row (design §9.5): impl in the staff run of the starter, scored like an entry. Within a
     shape, % of speed of light is the ideal bytes over the time (the kit's score.sol_percent), so impl's is
-    the submission's times t_submission / t_impl. Raises ValueError when one rounds to 0."""
+    the submission's times t_submission / t_impl. The census covers the submission only, so only its row has
+    kernels per call. Raises ValueError when a % of speed of light rounds to 0."""
     sols = [shape["sol_percent"] * shape["impls"]["submission"]["median_s"] / shape["impls"][impl]["median_s"]
             for shape in run["shapes"]]
+    kernels = max(run["census"]["kernels_per_call"].values(), default=None) if impl == "submission" else None
     return {"name": name, "language": language, "link": link, "score": _comparator_score(run, impl),
-            "sol_percent": _geomean(sols), "last_measured": run["finished_at"],
+            "sol_percent": _geomean(sols), "kernels_per_call": kernels, "last_measured": run["finished_at"],
             "job": run["environment"]["slurm_job_id"]}
 
 
@@ -284,10 +286,25 @@ def _heatmap(name: str, heatmap: dict | None) -> str:
 def _baseline_row(row: dict) -> str:
     name = html.escape(row["name"])
     cells = ("–", f'<a href="{html.escape(row["link"])}">{name}</a>' if row["link"] else name,
-             _score(row["score"]), _percent(row["sol_percent"]), "–", html.escape(row["language"]), "–",
+             _score(row["score"]), _percent(row["sol_percent"]),
+             "–" if row["kernels_per_call"] is None else str(row["kernels_per_call"]),
+             html.escape(row["language"]), "–",
              _when(row["last_measured"]),
              html.escape(f"Reference: measured by staff on {row['last_measured'][:10]}, job {row['job']}"))
     return '<tr class="baseline">' + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>"
+
+
+def _placed(rows: list[dict], baselines: list[dict]) -> list[tuple[bool, dict]]:
+    """(is a reference row, the row) in table order. The reference rows go among the ranked rows by score,
+    above the first one that scores less, so an entry with the same score stays above them. The unranked rows
+    follow, in board()'s order."""
+    references = sorted(baselines, key=lambda row: row["score"], reverse=True)
+    out = []
+    for row in rows:
+        while references and (row["rank"] is None or row["score"] is None or references[0]["score"] > row["score"]):
+            out.append((True, references.pop(0)))
+        out.append((False, row))
+    return out + [(True, row) for row in references]
 
 
 def _table(rows: list[dict], baselines: list[dict]) -> str:
@@ -296,11 +313,11 @@ def _table(rows: list[dict], baselines: list[dict]) -> str:
         return none
     head = ("Rank", "Team", "Score", "% of speed of light", "Kernels per call", "Language", "Submissions",
             "Last measured", "Status")
-    out = ['<div class="scroll"><table><thead><tr>', *(f"<th>{h}</th>" for h in head), "</tr></thead>"]
-    if baselines:
-        out.append('<tbody class="baselines">' + "".join(_baseline_row(row) for row in baselines) + "</tbody>")
-    out.append("<tbody>")
-    for row in rows:
+    out = ['<div class="scroll"><table><thead><tr>', *(f"<th>{h}</th>" for h in head), "</tr></thead><tbody>"]
+    for reference, row in _placed(rows, baselines):
+        if reference:
+            out.append(_baseline_row(row))
+            continue
         muted = ' class="unranked"' if row["rank"] is None else ""
         name = html.escape(row["name"])
         cells = ("–" if row["rank"] is None else str(row["rank"]),
@@ -392,9 +409,9 @@ def render(board: dict) -> str:
                 "PyTorch reference, both timed in the same job. % of speed of light: the share of the copy "
                 "bandwidth measured in that job. Kernels per call: the most kernels one call launches on any "
                 "shape. A stale entry changed its kernel after its newest eligible measurement, so the page "
-                "shows the older score. The reference rows at the top of each table come from one staff run of "
-                "the unchanged starter, which also timed PyTorch's bf16 F.cross_entropy. They are never "
-                "ranked.</p></footer>")
+                "shows the older score. The reference rows come from one staff run of the unchanged starter, which "
+                "also timed PyTorch's bf16 F.cross_entropy. They are placed by score and never ranked. The "
+                "harness counts kernels only for the submission, so the PyTorch row shows none.</p></footer>")
     return ("<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\">"
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
             f"<title>Kernel Cup leaderboard</title><style>{CSS}</style></head>"
@@ -446,7 +463,7 @@ CSS = (
     "td:last-child{white-space:normal;min-width:120px}"
     "tbody tr:last-child td{border-bottom:0}"
     "tr.unranked td,tr.baseline td{color:var(--ink-2)}"
-    "tbody.baselines tr:last-child td{border-bottom:2px solid var(--axis)}"
+    "tr.baseline td{font-style:italic;background:var(--page)}"
     ".panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}"
     ".panel,.team{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px}"
     "figure{margin:0}svg{display:block;width:100%;height:auto;max-width:480px}"
