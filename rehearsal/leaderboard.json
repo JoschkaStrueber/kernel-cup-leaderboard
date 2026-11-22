@@ -1,6 +1,6 @@
 {
- "updated_at": "2026-11-22T18:44:44Z",
- "phase": "open",
+ "updated_at": "2026-11-22T19:46:46Z",
+ "phase": "final",
  "reference": {
   "starter": null,
   "quack": null
@@ -31,5 +31,100 @@
   "no_nickname": 0,
   "unreadable": 0
  },
- "entries": {}
+ "entries": {
+  "rehearsal-starter": {
+   "name": "rehearsal-starter",
+   "division": "unassisted",
+   "language": null,
+   "status": "final",
+   "frozen": true,
+   "reasons": [],
+   "score": 2.5338642414675743,
+   "sol_percent": 13.95091534630632,
+   "kernels_per_call": null,
+   "submissions": 0,
+   "last_measured": null,
+   "heatmap": {
+    "256,8192": 3.1436329338447435,
+    "256,50304": 9.982787597530749,
+    "256,128256": 16.503802432197297,
+    "256,262144": 17.050990702462478,
+    "2048,8192": 12.719255305866358,
+    "2048,50304": 17.249902901485875,
+    "2048,128256": 17.555416424073282,
+    "2048,262144": 17.79076783106057,
+    "8192,8192": 16.06185946604151,
+    "8192,50304": 17.635254234551873,
+    "8192,128256": 17.765496739900506,
+    "8192,262144": 17.848678941298843
+   },
+   "history": [],
+   "rank": 1,
+   "prize": true
+  },
+  "rehearsal-harness": {
+   "name": "rehearsal-harness",
+   "division": "unassisted",
+   "language": null,
+   "status": "unranked",
+   "frozen": true,
+   "reasons": [],
+   "score": null,
+   "sol_percent": null,
+   "kernels_per_call": null,
+   "submissions": 0,
+   "last_measured": null,
+   "heatmap": null,
+   "history": [],
+   "rank": null,
+   "prize": false
+  },
+  "rehearsal-triton": {
+   "name": "rehearsal-triton",
+   "division": "assisted",
+   "language": null,
+   "status": "final",
+   "frozen": true,
+   "reasons": [],
+   "score": 7.507505247513788,
+   "sol_percent": 41.453876205358924,
+   "kernels_per_call": null,
+   "submissions": 0,
+   "last_measured": null,
+   "heatmap": {
+    "256,8192": 6.510596114442034,
+    "256,50304": 18.63526282128952,
+    "256,128256": 46.92180992392901,
+    "256,262144": 51.0542203369494,
+    "2048,8192": 24.850112612331184,
+    "2048,50304": 59.47602586461963,
+    "2048,128256": 62.816032040031,
+    "2048,262144": 62.65824470398185,
+    "8192,8192": 56.997315053284595,
+    "8192,50304": 63.53589908561901,
+    "8192,128256": 64.6844679208186,
+    "8192,262144": 65.01692980911491
+   },
+   "history": [],
+   "rank": 1,
+   "prize": true
+  },
+  "rehearsal-hostile": {
+   "name": "rehearsal-hostile",
+   "division": "assisted",
+   "language": null,
+   "status": "unranked",
+   "frozen": true,
+   "reasons": [],
+   "score": null,
+   "sol_percent": null,
+   "kernels_per_call": null,
+   "submissions": 0,
+   "last_measured": null,
+   "heatmap": null,
+   "history": [],
+   "rank": null,
+   "prize": false
+  }
+ }
 }
