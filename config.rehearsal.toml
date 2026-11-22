@@ -1,7 +1,7 @@
 # The Kernel Cup rehearsal of 2026-11-22 (docs/ops/kernel-cup.md §4). Deleted after the rehearsal (§4.6).
 owner = "LLM-Engineering-26-27"
 pattern = "^kcup-rehearsal-[0-9]$"
-freeze_at = "2026-11-22T20:30:00Z"     # 21:30 Berlin
+freeze_at = "2026-11-22T19:15:00Z"     # 20:15 Berlin
 output_prefix = "rehearsal/"
 accepted_kit_versions = ["v1"]
 cname = "kernelcup.strueber.dev"
