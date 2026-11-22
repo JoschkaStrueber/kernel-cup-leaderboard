@@ -124,7 +124,7 @@ def write_site(site: Path, board: dict, prefix: str) -> None:
     """Raises ValueError, and writes nothing, if the board holds NaN or an infinity: JSON has neither."""
     data = json.dumps(board, indent=1, ensure_ascii=False, allow_nan=False) + "\n"
     index = render(board)
-    site.mkdir(parents=True, exist_ok=True)
+    (site / f"{prefix}index.html").parent.mkdir(parents=True, exist_ok=True)  # a prefix may be a folder
     (site / f"{prefix}index.html").write_text(index, encoding="utf-8")
     (site / f"{prefix}leaderboard.json").write_text(data, encoding="utf-8")
 
