@@ -13,6 +13,7 @@ import json
 import math
 import statistics
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 from kcup_board import ranking
@@ -136,8 +137,15 @@ def _instant(text: str) -> datetime:
     return datetime.strptime(text, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
 
 
+LOCAL = ZoneInfo("Europe/Berlin")  # the course's time zone; times are shown without its abbreviation
+
+
+def _local(moment: datetime) -> str:
+    return f"{moment.astimezone(LOCAL):%d.%m.%Y %H:%M}"
+
+
 def _when(text: str | None) -> str:
-    return "–" if text is None else f"{_instant(text):%Y-%m-%d %H:%M} UTC"
+    return "–" if text is None else _local(_instant(text))
 
 
 def _score(value: float | None) -> str:
@@ -182,7 +190,7 @@ def _time_ticks(t0: float, t1: float) -> list[tuple[float, str]]:
     ticks = []
     t = math.ceil(t0 / step) * step
     while t <= t1:
-        moment = datetime.fromtimestamp(t, UTC)
+        moment = datetime.fromtimestamp(t, UTC).astimezone(LOCAL)
         label = f"{moment:%b} {moment.day}" if step >= 24 * hour else f"{moment:%b} {moment.day}, {moment:%H}:00"
         ticks.append((t, label))
         t += step
@@ -220,7 +228,7 @@ def _line_chart(series: list[tuple[str, int, list[tuple[float, float]]]], refs: 
             path = " ".join(f"{'M' if k == 0 else 'L'}{px:.1f},{py:.1f}" for k, (px, py) in enumerate(coords))
             out.append(f'<path class="line s{slot}" d="{path}"/>')
         for (px, py), (t, v) in zip(coords, points):
-            when = f"{datetime.fromtimestamp(t, UTC):%Y-%m-%d %H:%M} UTC"
+            when = _local(datetime.fromtimestamp(t, UTC))
             out.append(f'<g class="point s{slot}"><title>{html.escape(name)}, {when}: {_score(v)}</title>'
                        f'<circle class="hit" cx="{px:.1f}" cy="{py:.1f}" r="12"/>'
                        f'<circle class="dot" cx="{px:.1f}" cy="{py:.1f}" r="4"/></g>')
@@ -284,13 +292,13 @@ def _heatmap(name: str, heatmap: dict | None) -> str:
 
 
 def _baseline_row(row: dict) -> str:
-    name = html.escape(row["name"])
+    name = html.escape(row["name"]).replace(" (staff run)", "<br>(staff run)")  # keeps the Team column narrow
     cells = ("–", f'<a href="{html.escape(row["link"])}">{name}</a>' if row["link"] else name,
              _score(row["score"]), _percent(row["sol_percent"]),
              "–" if row["kernels_per_call"] is None else str(row["kernels_per_call"]),
              html.escape(row["language"]), "–",
              _when(row["last_measured"]),
-             html.escape(f"Reference: measured by staff on {row['last_measured'][:10]}, job {row['job']}"))
+             html.escape(f"Reference: measured by staff on {_when(row['last_measured'])[:10]}, job {row['job']}"))
     return '<tr class="baseline">' + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>"
 
 
