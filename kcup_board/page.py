@@ -31,7 +31,7 @@ BANNERS = {
 LANGUAGES = {"cute": "CuTe DSL", "triton": "Triton", "cuda": "CUDA C++"}
 REASONS = {"no-result": "no eligible result", "harness-modified": "harness modified", "census": "census failed",
            "implausible": "above 105% of speed of light", "team-toml": "team.toml needs a fix",
-           "writeup": "no write-up", "not-in-final": "not in the final ranking"}
+           "not-in-final": "not in the final ranking"}
 
 
 # -- leaderboard.json ---------------------------------------------------------------------------

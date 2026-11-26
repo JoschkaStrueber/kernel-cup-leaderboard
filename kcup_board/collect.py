@@ -7,7 +7,7 @@ name, a pair ID, a path or a URL: counts, statuses and exception types only.
     python -m kcup_board.collect --config config.toml --site site --kit-versions kit_versions.json --schema schema.json
 
 kit_versions.json (written by the course's publish script) maps every published kit tag to
-{"harness": {path: blob id}, "writeup": {"blob": the template's blob id, ...}}."""
+{"harness": {path: blob id}}. Older files also hold a "writeup" key, which is ignored."""
 
 from __future__ import annotations
 
@@ -46,7 +46,6 @@ EXCLUDED_FROM_KERNEL = (TEAM, WRITEUP)
 HARNESS_PREFIX = "kcup_harness/"
 HARNESS_EXTRA = ("job.sh", "pytest.ini")
 RESULTS = re.compile(r"^results/[^/]+\.json$")
-PLACEHOLDER = "> Replace this"
 BASELINE = "baselines/starter.json"  # next to config.toml: the staff run of the unchanged starter
 # The reference rows (design §9.5): the label, the implementation in the staff run whose timings make
 # the row, the language as the page shows it, and a link.
@@ -129,20 +128,6 @@ def harness_version(blobs: dict[str, str], kit_versions: dict) -> str | None:
     return next((version for version, kit in kit_versions.items() if kit["harness"] == blobs), None)
 
 
-def writeup_ok(text: str | None, template_blob: str, blob: str | None, division: str) -> bool:
-    """Present, not the template, and no placeholder left. An Unassisted entry may keep the one
-    under "## Assistants": that section is for the Assisted division."""
-    if text is None or blob == template_blob:
-        return False
-    assistants = False
-    for line in text.splitlines():
-        if line.startswith("## "):
-            assistants = line.startswith("## Assistants")
-        elif line.startswith(PLACEHOLDER) and not (assistants and division == "unassisted"):
-            return False
-    return True
-
-
 def team_history(versions: list[divisions.TeamVersion], head_text: str):
     """(the history divisions.display_names() reads, the entry's Team) from every committed version of
     team.toml and its text at the head. The nickname and language come from team.toml at the head
@@ -157,7 +142,7 @@ def team_history(versions: list[divisions.TeamVersion], head_text: str):
 
 
 def status(*, tree: dict[str, str], results_newest_first: list[dict], kit_versions: dict,
-           team: divisions.Team, frozen: bool, writeup: bool) -> dict:
+           team: divisions.Team, frozen: bool) -> dict:
     """results_newest_first holds the eligible results only, kit_versions the accepted versions only."""
     chosen = results_newest_first[0] if results_newest_first else None
     reasons = []
@@ -172,8 +157,6 @@ def status(*, tree: dict[str, str], results_newest_first: list[dict], kit_versio
         reasons.append("implausible")
     if team.problems:
         reasons.append("team-toml")
-    if frozen and not writeup:
-        reasons.append("writeup")
     if reasons:
         state = "unranked"
     else:
@@ -244,16 +227,8 @@ def _read_entry(client, owner: str, repo: str, kit_versions: dict, schema: dict,
             if len(results) == HISTORY:
                 break
     frozen = freeze_at is not None
-    writeup = False
-    if frozen:
-        try:
-            text = client.file(owner, repo, WRITEUP, head)
-        except ValueError:  # not UTF-8, or too large to read: no write-up that counts
-            text = None
-        writeup = all(writeup_ok(text, kit["writeup"]["blob"], tree.get(WRITEUP), team.division)
-                      for kit in kit_versions.values())
     row = status(tree=tree, results_newest_first=results, kit_versions=kit_versions, team=team,
-                 frozen=frozen, writeup=writeup)
+                 frozen=frozen)
     if row["results"] is not None:
         row["results"] = _for_page(row["results"])
     return history, {"division": team.division, "language": team.language, **row}, unreadable
