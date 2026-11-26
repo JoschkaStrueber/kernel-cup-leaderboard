@@ -23,9 +23,9 @@ DIVISIONS = {"unassisted": "Unassisted", "assisted": "Assisted"}
 RANKED = ("provisional", "stale")
 TOP = 5
 BANNERS = {
-    "open": "Provisional: self-measured on UC3. The final ranking comes from the staff re-run.",
-    "freezing": "Freezing: the board shows the on-time heads from ten minutes after the freeze.",
-    "frozen": "Frozen. The final ranking comes from the staff re-run.",
+    "open": "Provisional: self-measured on UC3.",
+    "freezing": "Closing: the board shows the on-time heads from ten minutes after it closes.",
+    "frozen": "Closed. Every score is self-measured on UC3.",
     "final": "Final ranking",
 }
 LANGUAGES = {"cute": "CuTe DSL", "triton": "Triton", "cuda": "CUDA C++"}
